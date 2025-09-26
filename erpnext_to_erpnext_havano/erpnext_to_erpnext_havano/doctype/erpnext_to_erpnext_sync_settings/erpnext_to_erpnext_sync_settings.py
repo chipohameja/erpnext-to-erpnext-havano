@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class ItemHav(Document):
+class ERPNexttoERPNextSyncSettings(Document):
 	pass

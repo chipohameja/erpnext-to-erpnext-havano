@@ -35,13 +35,55 @@ def sync_data(doctype):
 						f"{cloud_url}method/erpnext_to_erpnext_havano.api.update_item",
 						json={"doc": doctype, "name": item['name']},
 						headers=headers
-						)					
-					frappe.errprint(put_response.text)
+						)	
+					
 		frappe.msgprint(f"{doctype} synced.")
 	except Exception as e:
-		frappe.errprint(e)
+		sync_data = frappe.get_doc("ERPNext to ERPNext Sync Settings")
+		email_group = sync_data.email_group_name
+		email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
+		send_email(
+			recipient=email_recipient,
+			subject=f"{doctype} Failed to Sync",
+			message=f"An error occured: {str(e)}"
+			)
+		
+@frappe.whitelist()
+def sync_invoices():
+	try:
+		sales_invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
+		for invoice_name in sales_invoices:
+			invoice = frappe.get_doc("Sales Invoice", invoice_name)
+			invoice.custom_synced = 1
+			invoice.save()
+			frappe.db.commit()
+			put_response = requests.post(
+				f"{cloud_url}api/resource/Sales Invoice",
+				json=invoice,
+				headers=headers
+				)					
+		frappe.msgprint("Sales Invoices synced.")
+	except Exception as e:
+		sync_data = frappe.get_doc("ERPNext to ERPNext Sync Settings")
+		email_group = sync_data.email_group_name
+		email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
+		send_email(
+			recipient=email_recipient,
+			subject="Sales Invoices Failed to Sync",
+			message=f"An error occured: {str(e)}"
+			)
 
 @frappe.whitelist()
 def update_item(doc, name):
 	frappe.db.set_value(doc, name, "custom_synced", 1)
 	frappe.db.commit()
+
+def send_email(recipient, subject, message):
+	try:
+		frappe.sendmail(
+			recipients=recipient,
+			subject=subject,
+			message=message
+		)
+	except Exception as e:
+		frappe.errprint(f"Failed to send email: {e}")

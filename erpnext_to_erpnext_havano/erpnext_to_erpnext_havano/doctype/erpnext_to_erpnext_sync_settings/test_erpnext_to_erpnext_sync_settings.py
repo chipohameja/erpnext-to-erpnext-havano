@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestItemHav(FrappeTestCase):
+class TestERPNexttoERPNextSyncSettings(FrappeTestCase):
 	pass

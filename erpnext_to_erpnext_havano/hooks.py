@@ -83,12 +83,12 @@ app_license = "mit"
 # ------------
 
 # before_install = "erpnext_to_erpnext_havano.install.before_install"
-# after_install = "erpnext_to_erpnext_havano.install.after_install"
+after_install = "erpnext_to_erpnext_havano.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "erpnext_to_erpnext_havano.uninstall.before_uninstall"
+before_uninstall = "erpnext_to_erpnext_havano.install.before_uninstall"
 # after_uninstall = "erpnext_to_erpnext_havano.uninstall.after_uninstall"
 
 # Integration Setup
