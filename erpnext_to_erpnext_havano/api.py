@@ -17,10 +17,10 @@ headers = {
 
 
 @frappe.whitelist()
-def sync_data(self, doctype):
+def sync_data(doctype):
 	# Fetch and sync item groups
 	try:
-		items = requests.get(f'{cloud_url}{doctype}?fields=["*"]', headers=headers).json()
+		items = requests.get(f'{cloud_url}resource/{doctype}?fields=["*"]', headers=headers).json()
 		for item in items["data"]:
 			if item["custom_synced"] == 0:
 				if not frappe.db.exists(doctype, item["name"]):
@@ -32,7 +32,7 @@ def sync_data(self, doctype):
 					frappe.db.commit()
 				
 					put_response = requests.post(
-						f"{cloud_url}api/method/erpnext_to_erpnext_havano.api.update_item",
+						f"{cloud_url}method/erpnext_to_erpnext_havano.api.update_item",
 						json={"doc": doctype, "name": item['name']}
 						)					
 					frappe.errprint(put_response.text)
