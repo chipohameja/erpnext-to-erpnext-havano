@@ -27,9 +27,21 @@ def sync_data(doctype):
 					item["custom_synced"] = 1
 					# data = json.loads(item) if isinstance(item, str) else item
 					item["doctype"] = doctype
-					new_item = frappe.get_doc(item)
-					new_item.insert()
-					frappe.db.commit()
+					if doctype == "Company":
+						new_company = frappe.get_doc({
+							"doctype": "Company",
+							"company_name": item['company_name'],
+							"abbr": item['abbr'],
+							"default_currency": item['default_currency'],
+							"country": item['country'],
+							"custom_synced": 1
+						})
+						new_company.insert()
+						frappe.db.commit()
+					else:
+						new_item = frappe.get_doc(item)
+						new_item.insert()
+						frappe.db.commit()
 				
 					put_response = requests.post(
 						f"{cloud_url}method/erpnext_to_erpnext_havano.api.update_item",
@@ -39,6 +51,7 @@ def sync_data(doctype):
 					
 		frappe.msgprint(f"{doctype} synced.")
 	except Exception as e:
+		frappe.errprint(f"Error syncing {doctype}: {e}")
 		sync_data = frappe.get_doc("ERPNext to ERPNext Sync Settings")
 		email_group = sync_data.email_group_name
 		email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
@@ -70,7 +83,7 @@ def sync_invoices():
 		send_email(
 			recipient=email_recipient,
 			subject="Sales Invoices Failed to Sync",
-			message=f"An error occured: {str(e)}"
+			message=f"An error occurred: {str(e)}"
 			)
 
 @frappe.whitelist()

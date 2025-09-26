@@ -13,6 +13,13 @@ def get_custom_fields():
             "fieldname": "custom_synced",
             "label": "Synced",
             "fieldtype": "Check",
+            "insert_after": "enabled",
+            "default": 0,
+        }],
+        "Company": [{
+            "fieldname": "custom_synced",
+            "label": "Synced",
+            "fieldtype": "Check",
             "insert_after": "",
             "default": 0,
         }],
@@ -23,7 +30,7 @@ def get_custom_fields():
             "insert_after": "",
             "default": 0,
         }],
-        "Company": [{
+        "Customer":[{
             "fieldname": "custom_synced",
             "label": "Synced",
             "fieldtype": "Check",
