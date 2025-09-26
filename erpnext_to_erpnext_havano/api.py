@@ -33,7 +33,8 @@ def sync_data(doctype):
 				
 					put_response = requests.post(
 						f"{cloud_url}method/erpnext_to_erpnext_havano.api.update_item",
-						json={"doc": doctype, "name": item['name']}
+						json={"doc": doctype, "name": item['name']},
+						headers=headers
 						)					
 					frappe.errprint(put_response.text)
 		frappe.msgprint(f"{doctype} synced.")
