@@ -62,7 +62,7 @@ def sync_data(doctype):
 			)
 		
 @frappe.whitelist()
-def sync_invoices():
+def sync_invoice():
 	try:
 		sales_invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
 
@@ -77,12 +77,17 @@ def sync_invoices():
 
 			# convert to dict and remove the key
 			invoice_dict = invoice.as_dict()
-			invoice_dict.pop("name", None)   # remove "name" if it exists
+			invoice_dict.pop("name", None)
+			invoice_dict["doctype"] = "Sales Invoice"
+
+
+			invoice_json = json.dumps(invoice_dict, default=str)
+
 
 			put_response = requests.post(
-				f"{cloud_url}api/resource/Sales Invoice",
-				json=invoice_dict,
-				headers=headers
+				f"{cloud_url}method/erpnext_to_erpnext_havano.api.update_invoice",
+				headers=headers,
+				json=invoice_json,				
 			)		
 		frappe.msgprint("Sales Invoices synced.")
 
@@ -102,6 +107,26 @@ def update_item(doc, name):
 	frappe.db.set_value(doc, name, "custom_synced", 1)
 	frappe.db.commit()
 
+@frappe.whitelist()
+def update_invoice(doc):
+	new_sale = frappe.get_doc({doc})
+	new_sale.insert()
+	new_sale.submit()
+	frappe.db.commit()
+
+# def clean_invoice(doc):
+# 	data = doc.as_dict()
+
+#     # remove system keys
+# 	for key in [
+#         "name", "creation", "modified", "modified_by", "owner",
+#         "docstatus", "idx", "_liked_by", "_comments", "_user_tags"
+#     ]:
+# 		data.pop(key, None)
+		
+# 	data = json.dumps(data, default=str)
+# 	return data
+
 def send_email(recipient, subject, message):
 	try:
 		frappe.sendmail(
@@ -111,3 +136,5 @@ def send_email(recipient, subject, message):
 		)
 	except Exception as e:
 		frappe.errprint(f"Failed to send email: {e}")
+
+

@@ -9,7 +9,7 @@ frappe.ui.form.on("ERPNext to ERPNext Sync Settings", {
             });
         });
         frm.add_custom_button('Invoice Sync', () => {
-            frappe.call("erpnext_to_erpnext_havano.api.sync_invoices");
+            frappe.call("erpnext_to_erpnext_havano.api.sync_invoice");
         });
 
 	},
