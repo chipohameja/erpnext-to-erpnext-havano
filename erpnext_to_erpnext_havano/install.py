@@ -4,6 +4,20 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 def after_install():
     create_custom_fields(get_custom_fields(), update=True)
 
+    # doctypes = [
+    #     "User", "Company", "Account", "Customer", "Item Group",
+    #     "Warehouse", "Item", "Item Price", "Cost Center",
+    #     "Currency", "Currency Exchange", "Sales Invoice"
+    # ]
+
+    # for doctype in doctypes:
+    #     # set all existing records to 1
+    #     frappe.db.sql(f"""UPDATE `tab{doctype}` SET custom_synced = 1""")
+
+    # frappe.db.commit()
+
+    frappe.clear_cache()
+
 def before_uninstall():
     delete_custom_fields(get_custom_fields())
 
@@ -92,7 +106,18 @@ def get_custom_fields():
             "fieldtype": "Check",
             "insert_after": "",
             "default": 0,
-        }],
+            "allow_on_submit": 1
+        },
+        {
+            "fieldname": "reference_invoice",
+            "label": "Reference Invoice",
+            "fieldtype": "Data",
+            "insert_after": "custom_synced",
+            "default": "",
+            "allow_on_submit": 1
+        }
+        ],
+
     }
 
 def delete_custom_fields(custom_fields: dict):
@@ -106,4 +131,4 @@ def delete_custom_fields(custom_fields: dict):
             },
         )
 
-        frappe.clear_cache(doctype=doctype)
+        frappe.clear_cache()

@@ -65,18 +65,29 @@ def sync_data(doctype):
 def sync_invoices():
 	try:
 		sales_invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
+
 		for invoice_name in sales_invoices:
 			invoice = frappe.get_doc("Sales Invoice", invoice_name)
-			invoice.custom_synced = 1
-			invoice.save()
-			frappe.db.commit()
+
+			# mark as synced and set reference
+			frappe.db.set_value("Sales Invoice", invoice_name, {
+				"custom_synced": 1,
+				"reference_invoice": invoice_name
+			})
+
+			# convert to dict and remove the key
+			invoice_dict = invoice.as_dict()
+			invoice_dict.pop("name", None)   # remove "name" if it exists
+
 			put_response = requests.post(
 				f"{cloud_url}api/resource/Sales Invoice",
-				json=invoice,
+				json=invoice_dict,
 				headers=headers
-				)					
+			)		
 		frappe.msgprint("Sales Invoices synced.")
+
 	except Exception as e:
+		frappe.errprint(f"Error syncing Sales Invoices: {e}")
 		sync_data = frappe.get_doc("ERPNext to ERPNext Sync Settings")
 		email_group = sync_data.email_group_name
 		email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
