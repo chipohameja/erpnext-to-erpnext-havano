@@ -25,7 +25,6 @@ def sync_data(doctype):
 			if item["custom_synced"] == 0:
 				if not frappe.db.exists(doctype, item["name"]):
 					item["custom_synced"] = 1
-					# data = json.loads(item) if isinstance(item, str) else item
 					item["doctype"] = doctype
 					if doctype == "Company":
 						new_company = frappe.get_doc({
