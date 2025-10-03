@@ -114,7 +114,8 @@ def get_custom_fields():
             "fieldtype": "Data",
             "insert_after": "custom_synced",
             "default": "",
-            "allow_on_submit": 1
+            "allow_on_submit": 1,
+            "read_only": 1
         }
         ],
 

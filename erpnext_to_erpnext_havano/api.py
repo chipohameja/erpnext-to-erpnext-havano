@@ -114,7 +114,8 @@ def update_item(doc, name):
 
 @frappe.whitelist()
 def update_invoice(doc):
-	new_sale = frappe.get_doc(doc)
+	invoice_data = json.loads(doc)
+	new_sale = frappe.get_doc(invoice_data)
 	new_sale.insert()
 	frappe.db.commit()
 
