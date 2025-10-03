@@ -48,8 +48,6 @@ def sync_data(doctype):
 						json={"doc": doctype, "name": item['name']},
 						headers=headers
 						)	
-					
-		frappe.msgprint(f"{doctype} synced.")
 	except Exception as e:
 		frappe.errprint(f"Error syncing {doctype}: {e}")
 		sync_data = frappe.get_doc("ERPNext to ERPNext Sync Settings")
@@ -62,7 +60,14 @@ def sync_data(doctype):
 			)
 		
 @frappe.whitelist()
-def sync_invoice():
+def sync_doctypes():
+	doctypes = ["User", "Company", "Account", "Customer", "Item Group", "Warehouse", "Item", "Item Price", "Cost Center", "Currency", "Currency Exchange"]
+	for doctype in doctypes:
+		sync_data(doctype)
+	frappe.msgprint("Doctypes Synced")
+
+@frappe.whitelist()
+def sync_invoices():
 	try:
 		sales_invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
 
@@ -75,21 +80,22 @@ def sync_invoice():
 				"reference_invoice": invoice_name
 			})
 
-			# convert to dict and remove the key
+			frappe.db.commit()
+
+			# convert to dict and remove / add some keys
 			invoice_dict = invoice.as_dict()
 			invoice_dict.pop("name", None)
 			invoice_dict["doctype"] = "Sales Invoice"
-
+			invoice_dict["custom_synced"] = 1
+			invoice_dict["reference_invoice"] = invoice_name
 
 			invoice_json = json.dumps(invoice_dict, default=str)
-
 
 			put_response = requests.post(
 				f"{cloud_url}method/erpnext_to_erpnext_havano.api.update_invoice",
 				headers=headers,
-				json=invoice_json,				
+				json={"doc": invoice_json},				
 			)		
-		frappe.msgprint("Sales Invoices synced.")
 
 	except Exception as e:
 		frappe.errprint(f"Error syncing Sales Invoices: {e}")
@@ -109,23 +115,9 @@ def update_item(doc, name):
 
 @frappe.whitelist()
 def update_invoice(doc):
-	new_sale = frappe.get_doc({doc})
+	new_sale = frappe.get_doc(doc)
 	new_sale.insert()
-	new_sale.submit()
 	frappe.db.commit()
-
-# def clean_invoice(doc):
-# 	data = doc.as_dict()
-
-#     # remove system keys
-# 	for key in [
-#         "name", "creation", "modified", "modified_by", "owner",
-#         "docstatus", "idx", "_liked_by", "_comments", "_user_tags"
-#     ]:
-# 		data.pop(key, None)
-		
-# 	data = json.dumps(data, default=str)
-# 	return data
 
 def send_email(recipient, subject, message):
 	try:
@@ -136,5 +128,3 @@ def send_email(recipient, subject, message):
 		)
 	except Exception as e:
 		frappe.errprint(f"Failed to send email: {e}")
-
-
