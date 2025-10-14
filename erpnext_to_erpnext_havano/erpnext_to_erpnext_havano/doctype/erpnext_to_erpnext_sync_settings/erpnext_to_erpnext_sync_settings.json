@@ -5,7 +5,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "email_group_name"
+  "local_url",
+  "email_group_name",
+  "column_break_isqu",
+  "cloud_url",
+  "is_local"
  ],
  "fields": [
   {
@@ -13,13 +17,33 @@
    "fieldtype": "Link",
    "label": "Email Group Name",
    "options": "Email Group"
+  },
+  {
+   "fieldname": "local_url",
+   "fieldtype": "Data",
+   "label": "Local URL"
+  },
+  {
+   "fieldname": "column_break_isqu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cloud_url",
+   "fieldtype": "Data",
+   "label": "Cloud URL"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_local",
+   "fieldtype": "Check",
+   "label": "Is Local"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-09-26 20:21:55.887064",
+ "modified": "2025-10-14 21:29:48.700499",
  "modified_by": "Administrator",
  "module": "Erpnext To Erpnext Havano",
  "name": "ERPNext to ERPNext Sync Settings",

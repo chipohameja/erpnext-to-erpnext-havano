@@ -6,7 +6,7 @@ frappe.ui.form.on("ERPNext to ERPNext Sync Settings", {
         frm.add_custom_button('Sync Doctypes', () => {
             frappe.call("erpnext_to_erpnext_havano.api.sync_doctypes");
         });
-        frm.add_custom_button('Invoice Sync', () => {
+        frm.add_custom_button('Sync Invoices', () => {
             frappe.call("erpnext_to_erpnext_havano.api.sync_invoices");
         });
 	},
