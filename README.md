@@ -19,7 +19,7 @@ bench migrate
 
 To use this app, you will install it on both erpnext server you want to communicate with and both sites should have been setup the same way to avoid error(same companies on site setup) a fresh site is recommended.
 
-Before its usage make sure the app acting as a cloud (the one that sends record and receives sale invoices) can be accessed with using api key for administrator access. If it hasnt yet been allowed please do so and add the generated keys in a .env file in the root of this repo as shown below:
+Before its usage make sure the app acting as a cloud (the one that sends record and receives sale invoices) can be accessed with using api key for administrator access. If it hasnt yet been allowed please do so and add the generated keys in a .env file for both the cloud and local in the root of this repo with the api kay and secret as shown below:
 
 ```
 API_KEY="add_the_api_key"
@@ -29,6 +29,12 @@ API_SECRET="add_the_secret"
 After installation, go the **ERPNext to ERPNext Sync Settings** doctype for the server that will be receiving records and send out the invoices and set that as the local by checking the **"Is Local"** checkbox. Leave the checkbox unchecked for the server acting as the cloud. Then set your cloud url and the local url.
 
 Create an email group that will serve as the system administrators to be notified when any error occurs and add members to the emails then in the **ERPNext to ERPNext Sync Settings** doctype update the email group name field.
+
+Now after all these have been done migrate your site so the syncing can be done every 2 minutes. You can edit the frequency from the scheduler_events in hooks.py
+
+```
+bench --site site-name migrate
+```
 
 The syncing will automatically take place every 2 minutes and incase of any errors the members of the email group will be notified.
 

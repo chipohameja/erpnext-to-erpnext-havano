@@ -61,52 +61,54 @@ def sync_data(doctype):
 		
 @frappe.whitelist()
 def sync_doctypes():
-	if sync_settings.is_local == 1:
-		doctypes = ["User", "Company", "Account", "Customer", "Item Group", "Warehouse", "Item", "Item Price", "Cost Center", "Currency", "Currency Exchange"]
-		for doctype in doctypes:
-			sync_data(doctype)
+	if cloud_url and local_url:
+		if sync_settings.is_local == 1:
+			doctypes = ["User", "Company", "Account", "Customer", "Item Group", "Warehouse", "Item", "Item Price", "Cost Center", "Currency", "Currency Exchange"]
+			for doctype in doctypes:
+				sync_data(doctype)
 
 @frappe.whitelist()
 def sync_invoices():
-	if sync_settings.is_local == 1:
-		try:
-			sales_invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
+	if cloud_url and local_url:
+		if sync_settings.is_local == 1:
+			try:
+				sales_invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
 
-			for invoice_name in sales_invoices:
-				invoice = frappe.get_doc("Sales Invoice", invoice_name)
+				for invoice_name in sales_invoices:
+					invoice = frappe.get_doc("Sales Invoice", invoice_name)
 
-				# mark as synced and set reference
-				frappe.db.set_value("Sales Invoice", invoice_name, {
-					"custom_synced": 1,
-					"reference_invoice": invoice_name
-				})
+					# mark as synced and set reference
+					frappe.db.set_value("Sales Invoice", invoice_name, {
+						"custom_synced": 1,
+						"reference_invoice": invoice_name
+					})
 
-				frappe.db.commit()
+					frappe.db.commit()
 
-				# convert to dict and remove / add some keys
-				invoice_dict = invoice.as_dict()
-				invoice_dict.pop("name", None)
-				invoice_dict["doctype"] = "Sales Invoice"
-				invoice_dict["custom_synced"] = 1
-				invoice_dict["reference_invoice"] = invoice_name
+					# convert to dict and remove / add some keys
+					invoice_dict = invoice.as_dict()
+					invoice_dict.pop("name", None)
+					invoice_dict["doctype"] = "Sales Invoice"
+					invoice_dict["custom_synced"] = 1
+					invoice_dict["reference_invoice"] = invoice_name
 
-				invoice_json = json.dumps(invoice_dict, default=str)
+					invoice_json = json.dumps(invoice_dict, default=str)
 
-				put_response = requests.post(
-					f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_invoice",
-					headers=headers,
-					json={"doc": invoice_json},				
-				)		
+					put_response = requests.post(
+						f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_invoice",
+						headers=headers,
+						json={"doc": invoice_json},				
+					)		
 
-		except Exception as e:
-			frappe.errprint(f"Error syncing Sales Invoices: {e}")
-			email_group = sync_settings.email_group_name
-			email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
-			send_email(
-				recipient=email_recipient,
-				subject="Sales Invoices Failed to Sync",
-				message=f"An error occurred: {str(e)}"
-				)
+			except Exception as e:
+				frappe.errprint(f"Error syncing Sales Invoices: {e}")
+				email_group = sync_settings.email_group_name
+				email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
+				send_email(
+					recipient=email_recipient,
+					subject="Sales Invoices Failed to Sync",
+					message=f"An error occurred: {str(e)}"
+					)
 
 @frappe.whitelist()
 def update_item(doc, name):
