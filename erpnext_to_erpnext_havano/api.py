@@ -43,12 +43,16 @@ def sync_data(doctype):
 						new_item = frappe.get_doc(item)
 						new_item.insert()
 						frappe.db.commit()
-				
+
+					frappe.errprint(f"Synced {doctype} locally")
+
 					put_response = requests.post(
 						f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_item",
 						json={"doc": doctype, "name": item['name']},
 						headers=headers
 						)	
+					
+					frappe.errprint(f"Synced field on cloud for {doctype}")
 	except Exception as e:
 		frappe.errprint(f"Error syncing {doctype}: {e}")
 		email_group = sync_settings.email_group_name
@@ -99,6 +103,8 @@ def sync_invoices():
 						headers=headers,
 						json={"doc": invoice_json},				
 					)		
+
+				frappe.errprint(f"Synced Invoices to cloud.")
 
 			except Exception as e:
 				frappe.errprint(f"Error syncing Sales Invoices: {e}")
