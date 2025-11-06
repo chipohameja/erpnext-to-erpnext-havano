@@ -3,8 +3,11 @@ from frappe.model.document import Document
 import requests
 import os
 import json
+from pathlib import Path
 from dotenv import load_dotenv
 
+
+env_path = Path(__file__).resolve().parent.parent / '.env'
 load_dotenv()
 
 sync_settings = frappe.get_doc("ERPNext to ERPNext Sync Settings")
