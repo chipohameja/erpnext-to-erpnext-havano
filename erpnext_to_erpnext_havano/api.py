@@ -42,6 +42,12 @@ def sync_data(doctype):
 						})
 						new_company.insert()
 						frappe.db.commit()
+					elif doctype == "User":
+						name = item['name']
+						user_data = requests.get(f'{cloud_url}/api/resource/User/{name}?fields=["*"]', headers=headers).json()
+						user_data["data"]["custom_synced"] = 1
+						user_data["data"]["doctype"] = "User"
+						new_user = frappe.get_doc(user_data["data"])
 					else:
 						new_item = frappe.get_doc(item)
 						new_item.insert()
@@ -70,7 +76,7 @@ def sync_data(doctype):
 def sync_doctypes():
 	if cloud_url and local_url:
 		if sync_settings.is_local == 1:
-			doctypes = ["User", "Company", "Account", "Customer", "Item Group", "Warehouse", "Item", "Item Price", "Cost Center", "Currency", "Currency Exchange"]
+			doctypes = ["User", "Company", "Account", "Customer", "Item Group", "Warehouse", "Item", "Cost Center", "Currency", "Currency Exchange"]
 			for doctype in doctypes:
 				sync_data(doctype)
 
