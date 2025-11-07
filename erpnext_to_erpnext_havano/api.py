@@ -23,56 +23,76 @@ headers = {
 
 @frappe.whitelist()
 def sync_data(doctype):
-	# Fetch and sync item groups
-	try:
-		items = requests.get(f'{cloud_url}/api/resource/{doctype}?fields=["*"]', headers=headers).json()
-		for item in items["data"]:
-			if item["custom_synced"] == 0:
-				if not frappe.db.exists(doctype, item["name"]):
-					item["custom_synced"] = 1
-					item["doctype"] = doctype
-					if doctype == "Company":
-						new_company = frappe.get_doc({
-							"doctype": "Company",
-							"company_name": item['company_name'],
-							"abbr": item['abbr'],
-							"default_currency": item['default_currency'],
-							"country": item['country'],
-							"custom_synced": 1
-						})
-						new_company.insert()
-						frappe.db.commit()
-					elif doctype == "User":
-						name = item['name']
-						user_data = requests.get(f'{cloud_url}/api/resource/User/{name}?fields=["*"]', headers=headers).json()
-						user_data["data"]["custom_synced"] = 1
-						user_data["data"]["doctype"] = "User"
-						new_user = frappe.get_doc(user_data["data"])
-						new_user.insert()
-						frappe.db.commit()
-					else:
-						new_item = frappe.get_doc(item)
-						new_item.insert()
-						frappe.db.commit()
+    try:
+        items_response = requests.get(f'{cloud_url}/api/resource/{doctype}?fields=["*"]', headers=headers)
+        if items_response.status_code != 200:
+            frappe.errprint(f"Failed to fetch {doctype}: {items_response.status_code}")
+            return
 
-					frappe.errprint(f"Synced {doctype} locally")
+        items = items_response.json().get("data", [])
+        for item in items:
+            try:
+                if item.get("custom_synced") == 0 and not frappe.db.exists(doctype, item["name"]):
+                    item["doctype"] = doctype
 
-					put_response = requests.post(
-						f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_item",
-						json={"doc": doctype, "name": item['name']},
-						headers=headers
-						)	
-					
-					frappe.errprint(f"Synced field on cloud for {doctype}")
-	except Exception as e:
-		frappe.errprint(f"Error syncing {doctype}: {e}")
-		email_group = sync_settings.email_group_name
-		email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
-		send_email(
-			recipient=email_recipient,
-			subject=f"{doctype} Failed to Sync",
-			message=f"An error occured: {str(e)}"
-			)
+                    # Create new doc depending on doctype
+                    if doctype == "Company":
+                        new_doc = frappe.get_doc({
+                            "doctype": "Company",
+                            "company_name": item.get("company_name"),
+                            "abbr": item.get("abbr"),
+                            "default_currency": item.get("default_currency"),
+                            "country": item.get("country"),
+                            "custom_synced": 1
+                        })
+                    elif doctype == "User":
+                        name = item["name"]
+                        user_data = requests.get(f'{cloud_url}/api/resource/User/{name}?fields=["*"]', headers=headers).json()
+                        user_dict = user_data.get("data")
+                        user_dict["doctype"] = "User"
+                        user_dict["custom_synced"] = 1
+                        new_doc = frappe.get_doc(user_dict)
+                    else:
+                        item["custom_synced"] = 1
+                        new_doc = frappe.get_doc(item)
+
+                    # Try insert and commit
+                    try:
+                        new_doc.insert(ignore_permissions=True)
+                        frappe.db.commit()
+                        frappe.errprint(f"Inserted {doctype} '{item['name']}' locally")
+
+                        # Only mark as synced on cloud after successful commit
+                        put_response = requests.post(
+                            f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_item",
+                            json={"doc": doctype, "name": item['name']},
+                            headers=headers
+                        )
+
+                        if put_response.status_code == 200:
+                            frappe.errprint(f"Marked {doctype} '{item['name']}' as synced on cloud")
+                        else:
+                            frappe.errprint(f"Cloud update failed for {doctype} '{item['name']}': {put_response.text}")
+
+                    except Exception as insert_err:
+                        frappe.errprint(f"Failed to insert {doctype} '{item['name']}': {insert_err}")
+                        frappe.log_error(str(insert_err), f"Sync Insert Failed: {doctype}")
+
+            except Exception as inner_err:
+                frappe.errprint(f"Error processing {doctype} record {item.get('name')}: {inner_err}")
+                frappe.log_error(str(inner_err), f"Sync Error: {doctype}")
+
+    except Exception as outer_err:
+        frappe.errprint(f"Error syncing {doctype}: {outer_err}")
+        frappe.log_error(str(outer_err), f"Sync Failed: {doctype}")
+
+        email_group = sync_settings.email_group_name
+        email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
+        send_email(
+            recipient=email_recipient,
+            subject=f"{doctype} Failed to Sync",
+            message=f"An error occurred while syncing {doctype}: {str(outer_err)}"
+        )
 		
 @frappe.whitelist()
 def sync_doctypes():
