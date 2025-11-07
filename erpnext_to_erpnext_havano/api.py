@@ -48,6 +48,8 @@ def sync_data(doctype):
 						user_data["data"]["custom_synced"] = 1
 						user_data["data"]["doctype"] = "User"
 						new_user = frappe.get_doc(user_data["data"])
+						new_user.insert()
+						frappe.db.commit()
 					else:
 						new_item = frappe.get_doc(item)
 						new_item.insert()
