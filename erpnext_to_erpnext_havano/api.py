@@ -76,15 +76,15 @@ def sync_data(doctype):
 
                     except Exception as insert_err:
                         frappe.errprint(f"Failed to insert {doctype} '{item['name']}': {insert_err}")
-                        frappe.log_error(str(insert_err), f"Sync Insert Failed: {doctype}")
+                        frappe.log_error(f"Sync Insert Failed: {doctype}", str(insert_err))
 
             except Exception as inner_err:
                 frappe.errprint(f"Error processing {doctype} record {item.get('name')}: {inner_err}")
-                frappe.log_error(str(inner_err), f"Sync Error: {doctype}")
+                frappe.log_error(f"Sync Error: {doctype}", str(inner_err))
 
     except Exception as outer_err:
         frappe.errprint(f"Error syncing {doctype}: {outer_err}")
-        frappe.log_error(str(outer_err), f"Sync Failed: {doctype}")
+        frappe.log_error(f"Sync Failed: {doctype}", str(outer_err))
 
         email_group = sync_settings.email_group_name
         email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
@@ -139,6 +139,7 @@ def sync_invoices():
 
 			except Exception as e:
 				frappe.errprint(f"Error syncing Sales Invoices: {e}")
+				frappe.log_error("Sales Invoice Sync Failed", str(e))
 				email_group = sync_settings.email_group_name
 				email_recipient = frappe.get_all("Email Group Member", filters={"email_group": email_group}, pluck="email")
 				send_email(
