@@ -24,7 +24,7 @@ headers = {
 @frappe.whitelist()
 def sync_data(doctype):
     try:
-        items_response = requests.get(f'{cloud_url}/api/resource/{doctype}?fields=["*"]', headers=headers)
+        items_response = requests.get(f'{cloud_url}/api/resource/{doctype}?fields=["*"]', headers=headers, timeout=15)
         if items_response.status_code != 200:
             frappe.errprint(f"Failed to fetch {doctype}: {items_response.status_code}")
             return
@@ -47,8 +47,8 @@ def sync_data(doctype):
                         })
                     elif doctype == "User":
                         name = item["name"]
-                        user_data = requests.get(f'{cloud_url}/api/resource/User/{name}?fields=["*"]', headers=headers).json()
-                        user_dict = user_data.get("data")
+                        user_data = requests.get(f'{cloud_url}/api/resource/User/{name}?fields=["*"]', headers=headers, timeout=15)
+                        user_dict = user_data.json().get("data")
                         user_dict["doctype"] = "User"
                         user_dict["custom_synced"] = 1
                         new_doc = frappe.get_doc(user_dict)
@@ -66,7 +66,8 @@ def sync_data(doctype):
                         put_response = requests.post(
                             f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_item",
                             json={"doc": doctype, "name": item['name']},
-                            headers=headers
+                            headers=headers,
+                            timeout=15
                         )
 
                         if put_response.status_code == 200:
@@ -132,7 +133,8 @@ def sync_invoices():
 					put_response = requests.post(
 						f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_invoice",
 						headers=headers,
-						json={"doc": invoice_json},				
+						json={"doc": invoice_json},
+                        timeout=15				
 					)		
 
 				frappe.errprint(f"Synced Invoices to cloud.")
