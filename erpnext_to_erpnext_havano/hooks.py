@@ -151,8 +151,7 @@ before_uninstall = "erpnext_to_erpnext_havano.install.before_uninstall"
 scheduler_events = {
     "cron": {
         "*/5 * * * *":[
-            "erpnext_to_erpnext_havano.api.sync_doctypes",
-            "erpnext_to_erpnext_havano.api.sync_invoices"
+            "erpnext_to_erpnext_havano.api.cron_sync_all",
         ]
     }
 }

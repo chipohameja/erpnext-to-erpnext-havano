@@ -28,6 +28,15 @@ HEADERS = {
 	"Content-Type": "application/json"
 }
 
+@frappe.whitelist()
+def cron_sync_all():
+	try:
+		sync_doctypes()
+		sync_invoices()
+	except Exception as e:
+		frappe.log_error("Cron Sync Fatal Error", str(e))
+
+
 # --- Helper for safe API calls ---
 def make_request(session, method, url, json_data=None, retries=3, timeout=15):
 	for attempt in range(retries):
