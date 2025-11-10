@@ -160,7 +160,7 @@ def update_invoice(doc):
 	sales_invoice_insert_time = now()
 	new_sale.insert(ignore_permissions=True)
 	frappe.db.commit()
-	frappe.log_error(title=f"Sync time: Sales Invoice", message=f"'{invoice_data['name']}' in Sales Invoice synced at {sales_invoice_insert_time}")
+	frappe.log_error(title=f"Sync time: Sales Invoice", message=f"'{invoice_data.get('name')}' in Sales Invoice synced at {sales_invoice_insert_time}")
 
 def send_email(recipient, subject, message):
 	try:

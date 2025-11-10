@@ -23,6 +23,13 @@ def before_uninstall():
 
 def get_custom_fields():
     return {
+        "Role": [{
+            "fieldname": "custom_synced",
+            "label": "Synced",
+            "fieldtype": "Check",
+            "insert_after": "",
+            "default": 0,
+        }],
         "User": [{
             "fieldname": "custom_synced",
             "label": "Synced",
