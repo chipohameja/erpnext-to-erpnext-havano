@@ -5,6 +5,7 @@ import os
 import json
 from pathlib import Path
 from dotenv import load_dotenv
+from frappe.utils import now
 
 
 # env_path = Path(__file__).resolve().parent.parent / '.env'
@@ -58,22 +59,17 @@ def sync_data(doctype):
 
                     # Try insert and commit
                     try:
+                        doc_insert_time = now()
                         new_doc.insert(ignore_permissions=True)
                         frappe.db.commit()
-                        frappe.errprint(f"Inserted {doctype} '{item['name']}' locally")
+                        frappe.log_error(title=f"Sync time: {doctype}", message=f"'{item['name']}' in {doctype} synced at {doc_insert_time}")
 
-                        # Only mark as synced on cloud after successful commit
                         put_response = requests.post(
                             f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_item",
                             json={"doc": doctype, "name": item['name']},
                             headers=headers,
                             timeout=15
                         )
-
-                        if put_response.status_code == 200:
-                            frappe.errprint(f"Marked {doctype} '{item['name']}' as synced on cloud")
-                        else:
-                            frappe.errprint(f"Cloud update failed for {doctype} '{item['name']}': {put_response.text}")
 
                     except Exception as insert_err:
                         frappe.errprint(f"Failed to insert {doctype} '{item['name']}': {insert_err}")
@@ -129,6 +125,8 @@ def sync_invoices():
 					invoice_dict["reference_invoice"] = invoice_name
 
 					invoice_json = json.dumps(invoice_dict, default=str)
+					
+
 
 					put_response = requests.post(
 						f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_invoice",
@@ -159,8 +157,10 @@ def update_item(doc, name):
 def update_invoice(doc):
 	invoice_data = json.loads(doc)
 	new_sale = frappe.get_doc(invoice_data)
-	new_sale.insert()
+	sales_invoice_insert_time = now()
+	new_sale.insert(ignore_permissions=True)
 	frappe.db.commit()
+	frappe.log_error(title=f"Sync time: Sales Invoice", message=f"'{invoice_data['name']}' in Sales Invoice synced at {sales_invoice_insert_time}")
 
 def send_email(recipient, subject, message):
 	try:
