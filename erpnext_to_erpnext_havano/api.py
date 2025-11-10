@@ -19,9 +19,10 @@ local_url = sync_settings.local_url
 API_KEY = os.getenv("API_KEY")
 API_SECRET = os.getenv("API_SECRET")
 
-if not API_KEY or not API_SECRET:
-	frappe.log_error("Missing API credentials", "Sync Initialization Error")
-	raise ValueError("Missing API credentials")
+if sync_settings.is_local == 1:
+	if not API_KEY or not API_SECRET:
+		frappe.log_error(title="Missing API credentials", message="Sync Initialization Error")
+		raise ValueError("Missing API credentials")
 
 HEADERS = {
 	"Authorization": f"token {API_KEY}:{API_SECRET}",
@@ -34,7 +35,7 @@ def cron_sync_all():
 		sync_doctypes()
 		sync_invoices()
 	except Exception as e:
-		frappe.log_error("Cron Sync Fatal Error", str(e))
+		frappe.log_error(title="Cron Sync Fatal Error", message=str(e))
 
 
 # --- Helper for safe API calls ---
