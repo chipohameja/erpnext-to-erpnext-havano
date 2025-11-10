@@ -34,7 +34,7 @@ def get_custom_fields():
             "fieldname": "custom_synced",
             "label": "Synced",
             "fieldtype": "Check",
-            "insert_after": "custom",
+            "insert_after": "",
             "default": 0,
         }],
         "User": [{
