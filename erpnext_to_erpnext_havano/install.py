@@ -30,6 +30,13 @@ def get_custom_fields():
             "insert_after": "",
             "default": 0,
         }],
+        "Module Def": [{
+            "fieldname": "custom_synced",
+            "label": "Synced",
+            "fieldtype": "Check",
+            "insert_after": "custom",
+            "default": 0,
+        }],
         "User": [{
             "fieldname": "custom_synced",
             "label": "Synced",

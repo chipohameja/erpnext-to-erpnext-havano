@@ -95,7 +95,7 @@ def sync_data(doctype):
 def sync_doctypes():
 	if cloud_url and local_url:
 		if sync_settings.is_local == 1:
-			doctypes = ["User", "Company", "Account", "Customer", "Item Group", "Warehouse", "Item", "Cost Center", "Currency", "Currency Exchange"]
+			doctypes = ["Role", "Module Def", "User", "Company", "Account", "Customer", "Item Group", "Warehouse", "Item", "Cost Center", "Currency", "Currency Exchange"]
 			for doctype in doctypes:
 				sync_data(doctype)
 
