@@ -181,7 +181,9 @@ def sync_invoices():
 					json_data={"docs": processed_inv}
 				)
 
-				for data in response:
+				resp_data = response.json().get("message", [])
+
+				for data in resp_data:
 					inv_name = data.get("reference_invoice")
 					reference = data.get("name")
 					frappe.db.set_value("Sales Invoice", inv_name, {
