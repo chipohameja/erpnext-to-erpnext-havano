@@ -172,7 +172,8 @@ def sync_invoices():
 				inv_dict["doctype"] = "Sales Invoice"
 				inv_dict["custom_synced"] = 1
 				inv_dict["reference_invoice"] = inv_name
-				processed_inv.append(inv_dict)
+				inv_data = json.loads(json.dumps(inv_dict, default=str))
+				processed_inv.append(inv_data)
 
 				
 			try:
