@@ -172,8 +172,8 @@ def sync_invoices():
 				inv_dict["doctype"] = "Sales Invoice"
 				inv_dict["custom_synced"] = 1
 				inv_dict["reference_invoice"] = inv_name
-				inv_json = json.dumps(inv_dict, default=str)
-				processed_inv.append(inv_json)
+				processed_inv.append(inv_dict)
+
 				
 			try:
 				response = make_request(
@@ -230,8 +230,7 @@ def update_item(docs):
 def update_invoice(docs):
 	updated_invoices = []
 	invoice_json = {}
-	for doc in docs:
-		data = json.loads(doc)
+	for data in docs:
 		new_sale = frappe.get_doc(data)
 		new_sale.insert(ignore_permissions=True)
 		sales_invoice_insert_time = now()
