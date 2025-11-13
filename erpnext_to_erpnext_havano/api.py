@@ -32,7 +32,7 @@ HEADERS = {
 @frappe.whitelist()
 def cron_sync_all():
 	try:
-		if sync_settings.is_local == 1
+		if sync_settings.is_local == 1:
 			sync_doctypes()
 			sync_invoices()
 	except Exception as e:
