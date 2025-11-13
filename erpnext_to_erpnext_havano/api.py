@@ -144,7 +144,7 @@ def sync_data(doctype):
 # --- Batch sync ---
 @frappe.whitelist()
 def sync_doctypes():
-	if cloud_url and local_url:
+	if cloud_url and local_url and sync_settings.is_local == 1:
 		doctypes = [
 			"Role", "Module Def", "User", "Company", "Account", "Customer",
 			"Item Group", "Warehouse", "Item", "Cost Center", "Currency", "Currency Exchange"
@@ -155,7 +155,7 @@ def sync_doctypes():
 # --- Invoice Sync ---
 @frappe.whitelist()
 def sync_invoices():
-	if cloud_url and local_url:
+	if cloud_url and local_url and sync_settings.is_local == 1:
 		session = requests.Session()
 		processed_inv = []
 		try:
