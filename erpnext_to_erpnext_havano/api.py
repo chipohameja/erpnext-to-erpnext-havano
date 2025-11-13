@@ -60,6 +60,7 @@ def make_request(session, method, url, json_data=None, retries=3, timeout=15):
 @frappe.whitelist()
 def sync_data(doctype):
 	session = requests.Session()
+	session.headers["Expect"] = ""
 	synced_data = []
 
 	try:
@@ -157,6 +158,7 @@ def sync_doctypes():
 def sync_invoices():
 	if cloud_url and local_url and sync_settings.is_local == 1:
 		session = requests.Session()
+		session.headers["Expect"] = ""
 		processed_inv = []
 		try:
 			invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
