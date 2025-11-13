@@ -32,8 +32,9 @@ HEADERS = {
 @frappe.whitelist()
 def cron_sync_all():
 	try:
-		sync_doctypes()
-		sync_invoices()
+		if sync_settings.is_local == 1
+			sync_doctypes()
+			sync_invoices()
 	except Exception as e:
 		frappe.log_error(title="Cron Sync Fatal Error", message=str(e))
 
@@ -63,8 +64,12 @@ def sync_data(doctype):
 
 	try:
 		items_response = make_request(
-			session, "get", f'{cloud_url}/api/resource/{doctype}?fields=["*"]'
+			session, "get", f'{cloud_url}/api/resource/{doctype}?filters=[["custom_synced", "=", "0"]]&fields=["*"]'
 		)
+		if not items_response:
+			return
+
+
 		items = items_response.json().get("data", [])
 
 		for item in items:
@@ -139,7 +144,7 @@ def sync_data(doctype):
 # --- Batch sync ---
 @frappe.whitelist()
 def sync_doctypes():
-	if cloud_url and local_url and sync_settings.is_local == 1:
+	if cloud_url and local_url:
 		doctypes = [
 			"Role", "Module Def", "User", "Company", "Account", "Customer",
 			"Item Group", "Warehouse", "Item", "Cost Center", "Currency", "Currency Exchange"
@@ -150,11 +155,14 @@ def sync_doctypes():
 # --- Invoice Sync ---
 @frappe.whitelist()
 def sync_invoices():
-	if cloud_url and local_url and sync_settings.is_local == 1:
+	if cloud_url and local_url:
 		session = requests.Session()
 		processed_inv = []
 		try:
 			invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
+			if not invoices:
+				return
+				
 			for inv_name in invoices:
 				inv = frappe.get_doc("Sales Invoice", inv_name)
 				inv_dict = inv.as_dict()
