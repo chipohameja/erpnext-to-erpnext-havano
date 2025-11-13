@@ -59,6 +59,7 @@ def make_request(session, method, url, json_data=None, retries=3, timeout=15):
 @frappe.whitelist()
 def sync_data(doctype):
 	session = requests.Session()
+	synced_data = []
 
 	try:
 		items_response = make_request(
@@ -102,24 +103,28 @@ def sync_data(doctype):
 							message=f"{item['name']} synced successfully at {doc_inserted}."
 						)
 
-						make_request(
-							session,
-							"post",
-							f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_item",
-							json_data={"doc": doctype, "name": item['name']}
-						)
-
+						synced_item = {
+							"doctype": doctype,
+							"name": item['name']
+						}
+						synced_data.append(synced_item)
 					except Exception as insert_err:
-						frappe.errprint(f"Failed to insert {doctype} '{item['name']}': {insert_err}")
-						frappe.log_error(title=f"Sync Insert Failed: {doctype}", message=str(insert_err))
+						frappe.log_error(title=f"Failed to insert: {doctype} '{item['name']}'", message=str(insert_err))
 
 			except Exception as inner_err:
-				frappe.errprint(f"Error processing {doctype} record {item.get('name')}: {inner_err}")
-				frappe.log_error(title=f"Sync Error: {doctype}", message=str(inner_err))
+				frappe.log_error(title=f"Error processing: {doctype} record {item.get('name')}", message=str(inner_err))
+		try:
+			make_request(
+				session,
+				"post",
+				f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_item",
+				json_data= {"docs": synced_data}
+			)
+		except Exception as update_err:
+			frappe.log_error(title=f"Failed to update cloud sync status for {doctype}", message=str(update_err))
 
 	except Exception as outer_err:
-		frappe.errprint(f"Error syncing {doctype}: {outer_err}")
-		frappe.log_error(title=f"Sync Failed: {doctype}", message=str(outer_err))
+		frappe.log_error(title=f"Failed to get item for: {doctype}", message=str(outer_err))
 
 		email_group = sync_settings.email_group_name
 		email_recipient = frappe.get_all(
@@ -147,39 +152,42 @@ def sync_doctypes():
 def sync_invoices():
 	if cloud_url and local_url and sync_settings.is_local == 1:
 		session = requests.Session()
-
+		processed_inv = []
 		try:
 			invoices = frappe.get_all("Sales Invoice", filters={"custom_synced": 0}, pluck="name")
 			for inv_name in invoices:
-				try:
-					inv = frappe.get_doc("Sales Invoice", inv_name)
-					inv_dict = inv.as_dict()
-					inv_dict.pop("name", None)
-					inv_dict["doctype"] = "Sales Invoice"
-					inv_dict["custom_synced"] = 1
-					inv_dict["reference_invoice"] = inv_name
+				inv = frappe.get_doc("Sales Invoice", inv_name)
+				inv_dict = inv.as_dict()
+				inv_dict.pop("name", None)
+				inv_dict["doctype"] = "Sales Invoice"
+				inv_dict["custom_synced"] = 1
+				inv_dict["reference_invoice"] = inv_name
+				inv_json = json.dumps(inv_dict, default=str)
+				processed_inv.append(inv_json)
+				
+			try:
+				response = make_request(
+					session,
+					"post",
+					f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_invoice",
+					json_data={"docs": processed_inv}
+				)
 
-					inv_json = json.dumps(inv_dict, default=str)
-
-					res = make_request(
-						session,
-						"post",
-						f"{cloud_url}/api/method/erpnext_to_erpnext_havano.api.update_invoice",
-						json_data={"doc": inv_json}
+				for data in response:
+					inv_name = data.get("reference_invoice")
+					reference = data.get("name")
+					frappe.db.set_value("Sales Invoice", inv_name, {
+						"custom_synced": 1,
+						"reference_invoice": reference
+					})
+					frappe.db.commit()
+					frappe.log_error(
+						title="Invoice Sync Success",
+						message=f"Sales Invoice '{inv_name}' synced successfully."
 					)
 
-					if res.status_code == 200:
-						frappe.db.set_value("Sales Invoice", inv_name, {
-							"custom_synced": 1,
-							"reference_invoice": inv_name
-						})
-						frappe.db.commit()
-					sleep(0.3)
-
-				except Exception as inv_err:
-					frappe.log_error(title="Invoice Sync Error", message=str(inv_err))
-
-			frappe.errprint("All unsynced Sales Invoices synced to cloud.")
+			except Exception as inv_err:
+				frappe.log_error(title="Invoice Sync Error", message=str(inv_err))
 
 		except Exception as e:
 			frappe.log_error(title="Sales Invoice Sync Failed", message=str(e))
@@ -195,21 +203,37 @@ def sync_invoices():
 
 # --- Helpers for cloud updates ---
 @frappe.whitelist()
-def update_item(doc, name):
-	frappe.db.set_value(doc, name, "custom_synced", 1)
-	frappe.db.commit()
+def update_item(docs):
+	for doc in docs:
+		doctype = doc.get("doctype")
+		name = doc.get("name")
+		frappe.db.set_value(doctype, name, "custom_synced", 1)
+		frappe.db.commit()
+		frappe.log_error(
+			title="Sync Update",
+			message=f"{doctype} '{name}' marked as synced."
+		)
 
 @frappe.whitelist()
-def update_invoice(doc):
-	data = json.loads(doc)
-	new_sale = frappe.get_doc(data)
-	new_sale.insert(ignore_permissions=True)
-	sales_invoice_insert_time = now()
-	frappe.db.commit()
-	frappe.log_error(
-		title="Sync time: Sales Invoice",
-		message=f"{data.get('name')} synced successfully at {sales_invoice_insert_time}."
-	)
+def update_invoice(docs):
+	updated_invoices = []
+	invoice_json = {}
+	for doc in docs:
+		data = json.loads(doc)
+		new_sale = frappe.get_doc(data)
+		new_sale.insert(ignore_permissions=True)
+		sales_invoice_insert_time = now()
+		frappe.db.commit()
+		frappe.log_error(
+			title="Sync time: Sales Invoice",
+			message=f"{data.get('name')} synced successfully at {sales_invoice_insert_time}."
+		)
+		invoice_json = {
+			"reference_invoice": data.get("reference_invoice"),
+			"name": new_sale.name
+		}
+		updated_invoices.append(invoice_json)
+	return updated_invoices
 
 # --- Email notification ---
 def send_email(recipient, subject, message):
