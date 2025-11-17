@@ -241,6 +241,10 @@ def update_item(docs):
 def update_invoice(docs):
     updated_invoices = []
     for data in docs:
+    
+        if frappe.db.exists("Sales Invoice", {"reference_invoice": doc.get("reference_invoice")}):
+            continue
+
         try:
             new_sale = frappe.get_doc(data)
             new_sale.insert(ignore_permissions=True)
