@@ -242,7 +242,7 @@ def update_invoice(docs):
     updated_invoices = []
     for data in docs:
     
-        if frappe.db.exists("Sales Invoice", {"reference_invoice": doc.get("reference_invoice")}):
+        if frappe.db.exists("Sales Invoice", {"reference_invoice": data.get("reference_invoice")}):
             continue
 
         try:
