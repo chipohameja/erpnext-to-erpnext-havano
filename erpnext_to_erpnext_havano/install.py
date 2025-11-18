@@ -122,7 +122,8 @@ def get_custom_fields():
             "insert_after": "custom_synced",
             "default": "",
             "allow_on_submit": 1,
-            "read_only": 1
+            "read_only": 1,
+            "unique": 1
         }
         ],
 
