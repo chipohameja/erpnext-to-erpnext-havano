@@ -34,9 +34,15 @@ Now after all these have been done migrate your site so the syncing can be done 
 
 ```
 bench --site site-name migrate
+bench --site site_name enable-scheduler
 ```
 
-The syncing will automatically take place every 2 minutes and incase of any errors the members of the email group will be notified.
+Use to check if the scheduler is active then restart your bench
+```
+bench --site site_name scheduler status
+```
+
+The syncing will automatically take place every 5 minutes and incase of any errors the members of the email group will be notified and error logs.
 
 ### Contributing
 
