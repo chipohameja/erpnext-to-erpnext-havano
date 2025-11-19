@@ -173,11 +173,12 @@ def sync_invoices():
             for inv_name in invoices:
                 try:
                     inv = frappe.get_doc("Sales Invoice", inv_name)
+                    date = inv.posting_date 
                     inv_dict = inv.as_dict()
                     inv_dict.pop("name", None)
                     inv_dict["doctype"] = "Sales Invoice"
                     inv_dict["custom_synced"] = 1
-                    inv_dict["reference_invoice"] = inv_name
+                    inv_dict["reference_invoice"] = f"{inv_name}-{date}"
                     inv_dict = serialize_dates(inv_dict)
 
                     processed_inv.append(inv_dict)
