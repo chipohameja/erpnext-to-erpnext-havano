@@ -242,7 +242,7 @@ def update_invoice(docs):
     updated_invoices = []
     for data in docs:
         if frappe.db.exists("Sales Invoice", {"reference_invoice": data.get("reference_invoice")}):
-            frappe.log_error(title="Sales Invoice Exist", message=f"Sales Invoice with reference: {data.get("reference_invoice")} already exists")
+            frappe.log_error(title="Sales Invoice Exist", message=f"Sales Invoice with reference: {data.get('reference_invoice')} already exists")
             continue
         
         try:
