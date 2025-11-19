@@ -198,7 +198,8 @@ def sync_invoices():
                     processed_inv_data = data.get("message", [])
                     for inv in processed_inv_data:
                         invoice_time = now()
-                        inv_name = inv["reference_invoice"]
+                        full_ref = inv["reference_invoice"]
+                        inv_name = strip_date(full_ref)
                         reference = inv["name"]
                         frappe.db.set_value("Sales Invoice", inv_name, {
                             "custom_synced": 1,
@@ -287,3 +288,7 @@ def serialize_dates(obj):
         return obj.total_seconds()
     else:
         return obj
+
+def strip_date(ref):
+    return ref.rsplit("-", 3)[0]
+
