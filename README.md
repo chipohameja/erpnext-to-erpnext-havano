@@ -1,6 +1,6 @@
 ### Erpnext To Erpnext Havano
 
-ERPNext communication with another ERPNext server
+ERPNext communication with another ERPNext server.
 
 ### Installation
 
